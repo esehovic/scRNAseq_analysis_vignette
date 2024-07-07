@@ -341,12 +341,12 @@ Next, in order to do annotation in a more unbiased way, we should firstly identi
 ```R
 cl_markers <- FindAllMarkers(seurat, only.pos = TRUE, min.pct = 0.25, logfc.threshold = log(1.2))
 library(dplyr)
-cl_markers %>% group_by(cluster) %>% top_n(n = 2, wt = avg_logFC)
+cl_markers %>% group_by(cluster) %>% top_n(n = 2, wt = avg_log2FC)
 ```
 <img src="images/top2_cl_markers.png" align="centre" /><br/><br/>
 Because of the nature of large sample size in scRNA-seq data (one cell is one sample), it is strongly recommended to not only look at p-values, but also detection rate of the gene in the cluster (```pct```) and fold change (```logfc```) between cells in and outside the cluster. That's why there are options ```min.pct``` and ```logfc.threshold``` in the function to require threshold on the effect size.
 
-<span style="font-size:0.8em">*P.S. you need to have ```dplyr``` package installed and imported to use the pipe feature. Alternatively, one can use the old-school ```lapply``` combinations, e.g. ```do.call(rbind, lapply(split(cl_markers, cl_markers$cluster), function(x) x[order(x$avg_logFC, decreasing=T)[1:2],]))```, but probably not many people like it.*</span>
+<span style="font-size:0.8em">*P.S. you need to have ```dplyr``` package installed and imported to use the pipe feature. Alternatively, one can use the old-school ```lapply``` combinations, e.g. ```do.call(rbind, lapply(split(cl_markers, cl_markers$cluster), function(x) x[order(x$avg_log2FC, decreasing=T)[1:2],]))```, but probably not many people like it.*</span>
 
 You may have felt that this process takes quite a while. There is a faster solution by the other package called "presto".
 ```R
@@ -366,7 +366,7 @@ The ```presto``` output is very similar to the native solution of Seurat, but wi
 
 No matter with which method, the identified top cluster markers can be next visualized by a heatmap
 ```R
-top10_cl_markers <- cl_markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_logFC)
+top10_cl_markers <- cl_markers %>% group_by(cluster) %>% top_n(n = 10, wt = avg_log2FC)
 DoHeatmap(seurat, features = top10_cl_markers$gene) + NoLegend()
 ```
 <img src="images/heatmap_clmarkers.png" align="centre" /><br/><br/>
@@ -386,7 +386,7 @@ Interesting, all these cells in cluster 10, 5, 0, 6 and 2 form a trajectory-like
 
 This is how cell cluster annotation is usually done. You may feel it too subjective and too much rely on personal judgement. In that case, there are also more objective and unbiased ways to do automated or semi-automated annotation. There are tools emerging, such as [Garnett](https://cole-trapnell-lab.github.io/garnett/) developed by Cole Trapnell's lab, and [Capybara](https://github.com/morris-lab/Capybara) developed by Samantha Morris' lab. These tools use similar strategy, to firstly standarize cell type annotations of existing scRNA-seq data, train one or multiple prediction model using the annotated data, and then apply the models to a new data set for the automated annotation. Currently, those tools have limitations. Their application is usually limited to major cell types of commonly studied organs, and their performance largely depends on data and annotation quality of the training data sets. Details of using these tools won't be discussed here, but for people who are interested, it is good to try.
 
-It is worth to mention that one doesn't always need to use a complex machine learning model trained on other scRNA-seq data to assist annotation of cell clusters. Caculating correlations of gene expression profiles of cells or cell clusters in the scRNA-seq data to those of bulk references can also be very informative. One example is [VoxHunt](https://github.com/quadbiolab/VoxHunt) developed by our group, which correlates expression profiles of cells or cell clusters to the in situ hybridization atlas of developing mouse brain in Allen Brain Atlas. This can be very helpful for annotating scRNA-seq data of cerebral organoid samples.
+It is worth to mention that one doesn't always need to use a complex machine learning model trained on other scRNA-seq data to assist annotation of cell clusters. Calculating correlations of gene expression profiles of cells or cell clusters in the scRNA-seq data to those of bulk references can also be very informative. One example is [VoxHunt](https://github.com/quadbiolab/VoxHunt) developed by our group, which correlates expression profiles of cells or cell clusters to the in situ hybridization atlas of developing mouse brain in Allen Brain Atlas. This can be very helpful for annotating scRNA-seq data of cerebral organoid samples.
 
 <span style="font-size:0.8em">*P.S. To do this the voxhunt package needs to be installed first. Please follow the instruction on the page and don't forget to also download the ABA ISH data, which also has a link on the page. Replace ```ABA_data``` below by the path towards the folder of the downloaded data.*</span>
 ```R
@@ -453,7 +453,7 @@ So far, there are quite a lot of different methods for pseudotime analysis. Comm
 
 First of all, cells of interest are extracted. Afterwards, we re-identify highly variable genes for the subset cells, as genes representing differences between dorsal telencephalic cells and other cells are no longer informative
 ```R
-seurat_dorsal <- subset(seurat, subset = RNA_snn_res.1 %in% c(0,2,5,6,10))
+seurat_dorsal <- subset(seurat, subset = SCT_snn_res.1 %in% c(0,2,5,6,10))
 seurat_dorsal <- FindVariableFeatures(seurat_dorsal, nfeatures = 2000)
 ```
 <span style="font-size:0.8em">*P.S. if you are sure that the clustering result you want to use to subset cells is the newest one, using ```seurat_dorsal <- subset(seurat, idents = c(0,2,5,6,10))``` gives you the same result. With this way it looks for cells in the active clustering result in the Seurat object, which is stored as ```seurat@active.ident```. In the metadata table (```seurat@meta.data```), there is also a column called ```seurat_clusters``` which shows the newest clustering result, and is updated every time when a new clustering is done. However, be careful. In real world when many iterations of parameter tryings are done, it is very common that one gets lost. So if you want to do it in this way, double check before doing the subset, to make sure that the active clustering result is the one to use.*</span>

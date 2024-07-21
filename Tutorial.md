@@ -453,7 +453,7 @@ So far, there are quite a lot of different methods for pseudotime analysis. Comm
 
 First of all, cells of interest are extracted. Afterwards, we re-identify highly variable genes for the subset cells, as genes representing differences between dorsal telencephalic cells and other cells are no longer informative
 ```R
-seurat_dorsal <- subset(seurat, subset = SCT_snn_res.1 %in% c(0,2,5,6,10))
+seurat_dorsal <- subset(seurat, subset = RNA_snn_res.1 %in% c(0,2,5,6,10))
 seurat_dorsal <- FindVariableFeatures(seurat_dorsal, nfeatures = 2000)
 ```
 <span style="font-size:0.8em">*P.S. if you are sure that the clustering result you want to use to subset cells is the newest one, using ```seurat_dorsal <- subset(seurat, idents = c(0,2,5,6,10))``` gives you the same result. With this way it looks for cells in the active clustering result in the Seurat object, which is stored as ```seurat@active.ident```. In the metadata table (```seurat@meta.data```), there is also a column called ```seurat_clusters``` which shows the newest clustering result, and is updated every time when a new clustering is done. However, be careful. In real world when many iterations of parameter tryings are done, it is very common that one gets lost. So if you want to do it in this way, double check before doing the subset, to make sure that the active clustering result is the one to use.*</span>
